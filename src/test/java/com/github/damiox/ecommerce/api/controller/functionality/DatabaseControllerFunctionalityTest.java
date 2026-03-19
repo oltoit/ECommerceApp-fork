@@ -12,6 +12,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+// Test-coverage according to jacoco is only 41% on DatabaseController -> try-catch block on Database Controller not tested
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class DatabaseControllerFunctionalityTest extends IntegrationTestBase {
 
