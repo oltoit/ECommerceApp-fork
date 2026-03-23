@@ -1,10 +1,9 @@
 create table if not exists app_user (
     id bigint,
-    username varchar(50) not null,
+    username varchar(50) not null unique,
     password varchar(100) not null,
     role varchar(10) not null,
-    primary key (id),
-    constraint username unique (username)
+    primary key (id)
 );
 
 create table if not exists app_category (
