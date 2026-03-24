@@ -38,28 +38,22 @@ public class ECommerceAppSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        // 1) Enabling Frames because it's required for h2. Note: this shouldn't be exposed to prod.
-        // 2) Setting exception handler in Filters
-        // 3) Allowing the following actions without authentication:
-        // 3.a) Processing OPTIONS for all endpoints
-        // 3.b) Processing POST on /login
-        // 3.c) Accessing to h2 web console. Note: this shouldn't be exposed to prod.
-        // 4) All the other requests need to be authenticated
-        // 5) Adding to the filter chain the JWT Authentication Filter
+        // 1) Setting exception handler in Filters
+        // 2) Allowing the following actions without authentication:
+            // a) Processing OPTIONS for all endpoints
+            // b) Processing POST on /login
+        // 3) All the other requests need to be authenticated
+        // 4) Adding to the filter chain the JWT Authentication Filter
         http
             .csrf()
             .disable()
-            .headers()
-            .frameOptions()
-            .sameOrigin()
-            .and()
             .sessionManagement()
             .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             .and()
             .authorizeRequests()
             .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
             .antMatchers(HttpMethod.POST, "/login").permitAll()
-            .antMatchers("/h2", "/h2/**", "/error").permitAll()
+            .antMatchers("/error").permitAll()
             .anyRequest().authenticated()
             .and()
             .addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class);
