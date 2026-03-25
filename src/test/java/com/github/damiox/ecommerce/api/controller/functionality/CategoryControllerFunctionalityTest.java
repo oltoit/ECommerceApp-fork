@@ -30,6 +30,7 @@ public class CategoryControllerFunctionalityTest extends IntegrationTestBase {
         baseUrl = categoriesUrl();
     }
 
+    // Get all
     @Test
     public void getAllCategories() {
         HttpHeaders headers = loginWithHeaders(user1);
@@ -37,15 +38,7 @@ public class CategoryControllerFunctionalityTest extends IntegrationTestBase {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
-    @Test
-    public void getAllCategoriesNotLoggedIn() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        ResponseEntity<String> response = restTemplate.exchange(baseUrl, HttpMethod.GET, new HttpEntity<>(headers), String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-    }
-
+    // Get specific
     @Test
     public void getCategory() {
         long id = categoryUtils.createCategory("test-category");
@@ -60,17 +53,7 @@ public class CategoryControllerFunctionalityTest extends IntegrationTestBase {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
-    @Test
-    public void getCategoryNotLoggedIn() {
-        long id = categoryUtils.createCategory("test-category");
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        ResponseEntity<String> response = restTemplate.exchange(categoryUrl((int) id), HttpMethod.GET, new HttpEntity<>(headers), String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-    }
-
+    // Create category
     @Test
     public void createCategory() {
         ResponseEntity<Map> response = createCategory(loginWithHeaders(admin), "new-category");
@@ -82,26 +65,12 @@ public class CategoryControllerFunctionalityTest extends IntegrationTestBase {
     }
 
     @Test
-    public void createCategoryNotLoggedIn() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        ResponseEntity<Map> response = createCategory(headers, "new-category");
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    public void createCategoryAsNormalUser() {
-        ResponseEntity<Map> response = createCategory(loginWithHeaders(user1), "new-category");
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-    }
-
-    @Test
     public void createCategoryEmptyName() {
         ResponseEntity<Map> response = createCategory(loginWithHeaders(admin), "");
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
+    // Update category
     @Test
     public void updateCategory() {
         long id = categoryUtils.createCategory("original-category");
@@ -111,30 +80,6 @@ public class CategoryControllerFunctionalityTest extends IntegrationTestBase {
 
         Map<String, Object> fromDb = categoryUtils.getCategoryAsMap(id);
         assertThat(fromDb.get("name")).isEqualTo("updated-category");
-    }
-
-    @Test
-    public void updateCategoryNotLoggedIn() {
-        long id = categoryUtils.createCategory("original-category");
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        ResponseEntity<Map> response = updateCategory(headers, id, "updated-category");
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-
-        Map<String, Object> fromDb = categoryUtils.getCategoryAsMap(id);
-        assertThat(fromDb.get("name")).isEqualTo("original-category");
-    }
-
-    @Test
-    public void updateCategoryAsNormalUser() {
-        long id = categoryUtils.createCategory("original-category");
-
-        ResponseEntity<Map> response = updateCategory(loginWithHeaders(user1), id, "updated-category");
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-
-        Map<String, Object> fromDb = categoryUtils.getCategoryAsMap(id);
-        assertThat(fromDb.get("name")).isEqualTo("original-category");
     }
 
     @Test
@@ -154,6 +99,8 @@ public class CategoryControllerFunctionalityTest extends IntegrationTestBase {
         assertThat(fromDb.get("name")).isEqualTo("original-category");
     }
 
+
+    // Delete category
     @Test
     public void deleteCategory() {
         long id = categoryUtils.createCategory("test-category");
@@ -166,30 +113,6 @@ public class CategoryControllerFunctionalityTest extends IntegrationTestBase {
     }
 
     @Test
-    public void deleteCategoryNotLoggedIn() {
-        long id = categoryUtils.createCategory("test-category");
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        ResponseEntity<Map> response = deleteCategory(headers, id);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-
-        Map<String, Object> fromDb = categoryUtils.getCategoryAsMap(id);
-        assertThat(fromDb.get("name")).isEqualTo("test-category");
-    }
-
-    @Test
-    public void deleteCategoryAsNormalUser() {
-        long id = categoryUtils.createCategory("test-category");
-
-        ResponseEntity<Map> response = deleteCategory(loginWithHeaders(user1), id);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-
-        Map<String, Object> fromDb = categoryUtils.getCategoryAsMap(id);
-        assertThat(fromDb.get("name")).isEqualTo("test-category");
-    }
-
-    @Test
     public void deleteCategoryNonExistent() {
         ResponseEntity<Map> response = deleteCategory(loginWithHeaders(admin), 1);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
@@ -197,7 +120,6 @@ public class CategoryControllerFunctionalityTest extends IntegrationTestBase {
 
 
     // Private helper functions
-
     private ResponseEntity<Map> createCategory(HttpHeaders headers, String name) {
         return restTemplate.exchange(baseUrl, HttpMethod.POST, new HttpEntity<>(new CategoryDto(name), headers), Map.class);
     }

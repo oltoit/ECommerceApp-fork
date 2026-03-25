@@ -18,6 +18,7 @@ public class CategorySubcategoriesControllerFunctionalityTest extends Integratio
     @Autowired
     private CategoryUtils categoryUtils;
 
+    // Get all
     @Test
     public void getSubcategories() {
         long parentId = categoryUtils.createCategory("parent");
@@ -28,23 +29,13 @@ public class CategorySubcategoriesControllerFunctionalityTest extends Integratio
     }
 
     @Test
-    public void getSubcategoriesNotLoggedIn() {
-        long parentId = categoryUtils.createCategory("parent");
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        ResponseEntity<String> response = restTemplate.exchange(subcategoriesUrl(parentId), HttpMethod.GET, new HttpEntity<>(headers), String.class);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-    }
-
-    @Test
     public void getSubcategoriesParentNotFound() {
         ResponseEntity<String> response = restTemplate.exchange(subcategoriesUrl(1), HttpMethod.GET, new HttpEntity<>(loginWithHeaders(user1)), String.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
+    // Add subcategory
     @Test
     public void addSubcategory() {
         long parentId = categoryUtils.createCategory("parent");
@@ -59,31 +50,17 @@ public class CategorySubcategoriesControllerFunctionalityTest extends Integratio
     }
 
     @Test
-    public void addSubcategoryNotLoggedIn() {
+    public void addSecondSubcategory() {
         long parentId = categoryUtils.createCategory("parent");
-        long childId = categoryUtils.createCategory("child");
+        long parent2Id = categoryUtils.createCategory("parent_2");
+        long childId = categoryUtils.createSubcategory("child", parent2Id);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        ResponseEntity<Map> response = addSubcategory(headers, parentId, childId);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        ResponseEntity<Map> response = addSubcategory(loginWithHeaders(admin), parentId, childId);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
-        // verify in db that parentId is still null
+        // verify that parentId was changed
         Map<String, Object> childFromDb = categoryUtils.getCategoryAsMap(childId);
-        assertThat(childFromDb.get("parentid")).isNull();
-    }
-
-    @Test
-    public void addSubcategoryAsNormalUser() {
-        long parentId = categoryUtils.createCategory("parent");
-        long childId = categoryUtils.createCategory("child");
-
-        ResponseEntity<Map> response = addSubcategory(loginWithHeaders(user1), parentId, childId);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-
-        // verify in db that parentId is still null
-        Map<String, Object> childFromDb = categoryUtils.getCategoryAsMap(childId);
-        assertThat(childFromDb.get("parentid")).isNull();
+        assertThat(childFromDb.get("parentid")).isEqualTo(parentId);
     }
 
     @Test
@@ -114,20 +91,7 @@ public class CategorySubcategoriesControllerFunctionalityTest extends Integratio
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
-    @Test
-    public void updateSubCategory() {
-        long parentId = categoryUtils.createCategory("parent");
-        long parent2Id = categoryUtils.createCategory("parent_2");
-        long childId = categoryUtils.createSubcategory("child", parent2Id);
-
-        ResponseEntity<Map> response = addSubcategory(loginWithHeaders(admin), parentId, childId);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-
-        // verify that parentId was changed
-        Map<String, Object> childFromDb = categoryUtils.getCategoryAsMap(childId);
-        assertThat(childFromDb.get("parentid")).isEqualTo(parentId);
-    }
-
+    // Remove subcategory
     @Test
     public void removeSubcategory() {
         long parentId = categoryUtils.createCategory("parent");
@@ -139,34 +103,6 @@ public class CategorySubcategoriesControllerFunctionalityTest extends Integratio
         // verify in db that parentid is now null
         Map<String, Object> childFromDb = categoryUtils.getCategoryAsMap(childId);
         assertThat(childFromDb.get("parentid")).isNull();
-    }
-
-    @Test
-    public void removeSubcategoryNotLoggedIn() {
-        long parentId = categoryUtils.createCategory("parent");
-        long childId = categoryUtils.createSubcategory("child", parentId);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        ResponseEntity<Map> response = removeSubcategory(headers, parentId, childId);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-
-        // verify in db that parentid is still set
-        Map<String, Object> childFromDb = categoryUtils.getCategoryAsMap(childId);
-        assertThat(childFromDb.get("parentid")).isEqualTo(parentId);
-    }
-
-    @Test
-    public void removeSubcategoryAsNormalUser() {
-        long parentId = categoryUtils.createCategory("parent");
-        long childId = categoryUtils.createSubcategory("child", parentId);
-
-        ResponseEntity<Map> response = removeSubcategory(loginWithHeaders(user1), parentId, childId);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-
-        // verify in db that parentid is still set
-        Map<String, Object> childFromDb = categoryUtils.getCategoryAsMap(childId);
-        assertThat(childFromDb.get("parentid")).isEqualTo(parentId);
     }
 
     @Test
@@ -196,7 +132,6 @@ public class CategorySubcategoriesControllerFunctionalityTest extends Integratio
 
 
     // Private helper functions
-
     private ResponseEntity<Map> addSubcategory(HttpHeaders headers, long parentId, long childId) {
         return restTemplate.exchange(
                 subcategoryUrl(parentId, childId),

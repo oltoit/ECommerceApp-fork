@@ -1,0 +1,108 @@
+package com.github.damiox.ecommerce.api.controller.performance.timeBehaviour.tests;
+
+import com.github.damiox.ecommerce.api.controller.objects.ProductDto;
+import com.github.damiox.ecommerce.api.controller.performance.timeBehaviour.PerfTimer;
+import com.github.damiox.ecommerce.api.controller.performance.timeBehaviour.TimeBehaviourIntegrationTestBase;
+import com.github.damiox.ecommerce.api.controller.utils.ProductUtils;
+import org.junit.FixMethodOrder;
+import org.junit.Test;
+import org.junit.runners.MethodSorters;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.*;
+
+import java.util.Map;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+public class ProductPerfTimeTest extends TimeBehaviourIntegrationTestBase {
+
+    @Autowired
+    private ProductUtils productUtils;
+
+    @Test
+    public void getProducts() {
+        // create 1.000 products
+        for (int i = 0; i < 1_000; i++) {
+            productUtils.createProduct(new ProductDto("test-product-" + i, "EUR", 10.00), user1.id);
+        }
+        String baseUrl = productsUrl();
+        HttpHeaders headers = loginWithHeaders(user1);
+        HttpEntity entity = new HttpEntity(headers);
+
+        PerfTimer.start();
+        ResponseEntity<String> response = restTemplate.exchange(baseUrl, HttpMethod.GET, entity, String.class);
+        PerfTimer.stop();
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    public void getProduct() {
+        // create 1.000 products
+        long id = productUtils.createProduct(defaultProduct, user1.id);
+        for (int i = 0; i < 999; i++) {
+            productUtils.createProduct(new ProductDto("test-product-" + i, "EUR", 10.00), user1.id);
+        }
+        String baseUrl = productUrl((int) id);
+        HttpHeaders headers = loginWithHeaders(user1);
+        HttpEntity entity = new HttpEntity(headers);
+
+        PerfTimer.start();
+        ResponseEntity<String> response = restTemplate.exchange(baseUrl, HttpMethod.GET, entity, String.class);
+        PerfTimer.stop();
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    public void createProduct() {
+        String baseUrl = productsUrl();
+        ProductDto product = defaultProduct;
+        HttpHeaders headers = loginWithHeaders(user1);
+        HttpEntity httpEntity = new HttpEntity(product, headers);
+
+        PerfTimer.start();
+        ResponseEntity<Map> response = restTemplate.exchange(baseUrl, HttpMethod.POST, httpEntity, Map.class);
+        PerfTimer.stop();
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+    }
+
+    @Test
+    public void updateProduct() {
+        // create 1.000 products
+        long id = productUtils.createProduct(defaultProduct, user1.id);
+        for (int i = 0; i < 999; i++) {
+            productUtils.createProduct(new ProductDto("test-product-" + i, "EUR", 10.00), user1.id);
+        }
+        String baseUrl = productUrl((int) id);
+        ProductDto product = new ProductDto("updated-product", "EUR", 10.00);
+        HttpHeaders headers = loginWithHeaders(user1);
+        HttpEntity httpEntity = new HttpEntity(product, headers);
+
+        PerfTimer.start();
+        ResponseEntity<Map> response = restTemplate.exchange(baseUrl, HttpMethod.PUT, httpEntity, Map.class);
+        PerfTimer.stop();
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    public void deleteProduct() {
+        // create 1.000 products
+        long id = productUtils.createProduct(defaultProduct, user1.id);
+        for (int i = 0; i < 999; i++) {
+            productUtils.createProduct(new ProductDto("test-product-" + i, "EUR", 10.00), user1.id);
+        }
+        String baseUrl = productUrl((int) id);
+        HttpHeaders headers = loginWithHeaders(user1);
+        HttpEntity httpEntity = new HttpEntity(headers);
+
+        PerfTimer.start();
+        ResponseEntity<Map> response = restTemplate.exchange(baseUrl, HttpMethod.DELETE, httpEntity, Map.class);
+        PerfTimer.stop();
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+    }
+}

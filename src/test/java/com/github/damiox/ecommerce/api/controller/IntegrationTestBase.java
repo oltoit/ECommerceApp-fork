@@ -38,6 +38,9 @@ public abstract class IntegrationTestBase {
     protected static User user2 = new User("user2", "user2", Role.USER, 2);
     protected static User admin = new User("admin", "admin", Role.ADMIN, 3);
 
+    protected static ProductDto defaultProduct = new ProductDto("test", "EUR", 10.00);
+
+
     @Before
     public void setUp() {
         restTemplate = new RestTemplate();
@@ -73,10 +76,6 @@ public abstract class IntegrationTestBase {
         return url("/login");
     }
 
-    protected String dbUrl() {
-        return url("/admin/db/reset");
-    }
-
     protected String productsUrl() {
         return url("/products");
     }
@@ -105,6 +104,10 @@ public abstract class IntegrationTestBase {
         return categoriesUrl() + "/" + categoryId + "/products";
     }
 
+    protected String categoryProductUrl(long categoryId, long productId) {
+        return categoryProductsUrl(categoryId) + "/" + productId;
+    }
+
     protected String login(User user) {
         CredentialsDto credentials = new CredentialsDto(user.name, user.password);
         Map<String, String> response = restTemplate.postForObject(loginUrl(), credentials, Map.class);
@@ -118,6 +121,4 @@ public abstract class IntegrationTestBase {
         headers.add(HttpHeaders.AUTHORIZATION, response.get("token"));
         return headers;
     }
-
-    protected ProductDto defaultProduct = new ProductDto("test", "EUR", 10.00);
 }

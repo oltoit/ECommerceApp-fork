@@ -13,12 +13,13 @@ import java.util.Map;
 
 @Service
 public class ProductUtils extends AbstractDBAccess {
+    // getter method
     public long getId(ResponseEntity<Map> map) {
         String href = (String) ((Map) ((Map) map.getBody().get("_links")).get("self")).get("href");
         return Long.parseLong(href.substring(href.lastIndexOf("/") + 1));
     }
 
-    // product queries
+    // product queries that run directly on database
     public ProductDto getProduct(long id) throws SQLException {
         String query = "SELECT * FROM app_product WHERE id = " + id;
         Map<String, Object> map =  jdbcTemplate.queryForMap(query);

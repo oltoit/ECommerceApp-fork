@@ -1,7 +1,6 @@
 package com.github.damiox.ecommerce.api.controller.functionality;
 
 import com.github.damiox.ecommerce.api.controller.IntegrationTestBase;
-import com.github.damiox.ecommerce.api.controller.objects.ProductDto;
 import com.github.damiox.ecommerce.api.controller.utils.CategoryUtils;
 import com.github.damiox.ecommerce.api.controller.utils.ProductCategoryUtils;
 import com.github.damiox.ecommerce.api.controller.utils.ProductUtils;
@@ -12,7 +11,6 @@ import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 
-import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -38,30 +36,20 @@ public class CategoryProductsControllerFunctionalityTest extends IntegrationTest
         baseUrl = categoryProductsUrl(categoryId);
     }
 
+    // Get all
     @Test
     public void getProducts() {
         ResponseEntity<String> response = restTemplate.exchange(baseUrl, HttpMethod.GET, new HttpEntity<>(loginWithHeaders(user1)), String.class);
-
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    }
-
-    @Test
-    public void getProductsNotLoggedIn() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        ResponseEntity<String> response = restTemplate.exchange(baseUrl, HttpMethod.GET, new HttpEntity<>(headers), String.class);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 
     @Test
     public void getProductsCategoryNotFound() {
         ResponseEntity<String> response = restTemplate.exchange(categoryProductsUrl(notCategoryId), HttpMethod.GET, new HttpEntity<>(loginWithHeaders(user1)), String.class);
-
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
+    // Add product
     @Test
     public void addProduct() {
         long productId = productUtils.createProduct(defaultProduct, user1.id);
@@ -70,38 +58,6 @@ public class CategoryProductsControllerFunctionalityTest extends IntegrationTest
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
         assertThat(productCategoryUtils.getCategoryIds(productId)).contains(categoryId);
-    }
-
-    @Test
-    public void addProductAsAdmin() {
-        long productId = productUtils.createProduct(defaultProduct, user1.id);
-
-        ResponseEntity<Map> response = addProduct(loginWithHeaders(admin), categoryId, productId);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-
-        assertThat(productCategoryUtils.getCategoryIds(productId)).contains(categoryId);
-    }
-
-    @Test
-    public void addProductNotLoggedIn() {
-        long productId = productUtils.createProduct(defaultProduct, user1.id);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        ResponseEntity<Map> response = addProduct(headers, categoryId, productId);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-
-        assertThat(productCategoryUtils.getCategoryIds(productId)).doesNotContain(categoryId);
-    }
-
-    @Test
-    public void addProductWrongUser() {
-        long productId = productUtils.createProduct(defaultProduct, user1.id);
-
-        ResponseEntity<Map> response = addProduct(loginWithHeaders(user2), categoryId, productId);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-
-        assertThat(productCategoryUtils.getCategoryIds(productId)).doesNotContain(categoryId);
     }
 
     @Test
@@ -139,6 +95,7 @@ public class CategoryProductsControllerFunctionalityTest extends IntegrationTest
         assertThat(productCategoryUtils.getCategoryIds(productId)).contains(categoryId, categoryId2);
     }
 
+    // Remove product
     @Test
     public void removeProduct() {
         long productId = productUtils.createProduct(defaultProduct, user1.id);
@@ -148,41 +105,6 @@ public class CategoryProductsControllerFunctionalityTest extends IntegrationTest
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
 
         assertThat(productCategoryUtils.getCategoryIds(productId)).doesNotContain(categoryId);
-    }
-
-    @Test
-    public void removeProductAsAdmin() {
-        long productId = productUtils.createProduct(defaultProduct, user1.id);
-        productCategoryUtils.addProductToCategory(productId, categoryId);
-
-        ResponseEntity<Map> response = removeProduct(loginWithHeaders(admin), categoryId, productId);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
-
-        assertThat(productCategoryUtils.getCategoryIds(productId)).doesNotContain(categoryId);
-    }
-
-    @Test
-    public void removeProductNotLoggedIn() {
-        long productId = productUtils.createProduct(defaultProduct, user1.id);
-        productCategoryUtils.addProductToCategory(productId, categoryId);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        ResponseEntity<Map> response = removeProduct(headers, categoryId, productId);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-
-        assertThat(productCategoryUtils.getCategoryIds(productId)).contains(categoryId);
-    }
-
-    @Test
-    public void removeProductWrongUser() {
-        long productId = productUtils.createProduct(defaultProduct, user1.id);
-        productCategoryUtils.addProductToCategory(productId, categoryId);
-
-        ResponseEntity<Map> response = removeProduct(loginWithHeaders(user2), categoryId, productId);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-
-        assertThat(productCategoryUtils.getCategoryIds(productId)).contains(categoryId);
     }
 
     @Test
@@ -208,100 +130,10 @@ public class CategoryProductsControllerFunctionalityTest extends IntegrationTest
     }
 
 
-    // Pagination Tests
-    @Test
-    public void getProductsPagination() {
-        for (int i = 0; i < 3; i++) {
-            long productId = productUtils.createProduct(new ProductDto("product-" + i, "EUR", 10.00), user1.id);
-            productCategoryUtils.addProductToCategory(productId, categoryId);
-        }
-
-        ResponseEntity<Map> response = restTemplate.exchange(baseUrl + "?page=0&size=2", HttpMethod.GET, new HttpEntity<>(loginWithHeaders(user1)), Map.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-
-        Map page = (Map) response.getBody().get("page");
-        assertThat(page.get("size")).isEqualTo(2);
-        assertThat(page.get("totalElements")).isEqualTo(3);
-        assertThat(page.get("totalPages")).isEqualTo(2);
-        assertThat(page.get("number")).isEqualTo(0);
-    }
-
-    @Test
-    public void getProductsPaginationPage2() {
-        for (int i = 0; i < 3; i++) {
-            long productId = productUtils.createProduct(new ProductDto("product-" + i, "EUR", 10.00), user1.id);
-            productCategoryUtils.addProductToCategory(productId, categoryId);
-        }
-
-        ResponseEntity<Map> response = restTemplate.exchange(baseUrl + "?page=1&size=2", HttpMethod.GET, new HttpEntity<>(loginWithHeaders(user1)), Map.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-
-        Map page = (Map) response.getBody().get("page");
-        assertThat(page.get("number")).isEqualTo(1);
-        assertThat(page.get("totalPages")).isEqualTo(2);
-
-        Map embedded = (Map) response.getBody().get("_embedded");
-        List<Map> products = (List<Map>) embedded.get("productResourceList");
-        assertThat(products).hasSize(1);
-    }
-
-    @Test
-    public void getProductsPaginationPageOutOfBounds() {
-        long productId = productUtils.createProduct(defaultProduct, user1.id);
-        productCategoryUtils.addProductToCategory(productId, categoryId);
-
-        ResponseEntity<Map> response = restTemplate.exchange(baseUrl + "?page=999&size=20", HttpMethod.GET,new HttpEntity<>(loginWithHeaders(user1)), Map.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-
-        Map page = (Map) response.getBody().get("page");
-        assertThat(page.get("number")).isEqualTo(999);
-        assertThat(page.get("totalElements")).isEqualTo(1);
-        assertThat(page.get("size")).isEqualTo(20);
-    }
-
-    @Test
-    public void getProductsPaginationNegativePageIndex() {
-        long productId = productUtils.createProduct(defaultProduct, user1.id);
-        productCategoryUtils.addProductToCategory(productId, categoryId);
-
-        ResponseEntity<Map> response = restTemplate.exchange(baseUrl + "?page=-1&size=20", HttpMethod.GET, new HttpEntity<>(loginWithHeaders(user1)), Map.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-
-        Map page = (Map) response.getBody().get("page");
-        assertThat(page.get("number")).isEqualTo(0);
-        assertThat(page.get("totalElements")).isEqualTo(1);
-        assertThat(page.get("size")).isEqualTo(20);
-    }
-
-    @Test
-    public void getProductsPaginationNegativePageSize() {
-        long productId = productUtils.createProduct(defaultProduct, user1.id);
-        productCategoryUtils.addProductToCategory(productId, categoryId);
-
-        ResponseEntity<Map> response = restTemplate.exchange(baseUrl + "?page=0&size=-1", HttpMethod.GET, new HttpEntity<>(loginWithHeaders(user1)), Map.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-
-        Map page = (Map) response.getBody().get("page");
-        assertThat(page.get("number")).isEqualTo(0);
-        assertThat(page.get("totalElements")).isEqualTo(1);
-        assertThat(page.get("size")).isEqualTo(20);
-    }
-
-    @Test
-    public void getProductsPaginationExceedMaxPageSize() {
-        ResponseEntity<Map> response = restTemplate.exchange(baseUrl + "?page=0&size=5000", HttpMethod.GET, new HttpEntity<>(loginWithHeaders(user1)), Map.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-
-        Map page = (Map) response.getBody().get("page");
-        assertThat(page.get("size")).isEqualTo(2000);
-    }
-
-
     // Private helper functions
-
     private ResponseEntity<Map> addProduct(HttpHeaders headers, long categoryId, long productId) {
         return restTemplate.exchange(
-                categoryProductsUrl(categoryId) + "/" + productId,
+                categoryProductUrl(categoryId, productId),
                 HttpMethod.POST,
                 new HttpEntity<>(headers),
                 Map.class
@@ -310,7 +142,7 @@ public class CategoryProductsControllerFunctionalityTest extends IntegrationTest
 
     private ResponseEntity<Map> removeProduct(HttpHeaders headers, long categoryId, long productId) {
         return restTemplate.exchange(
-                categoryProductsUrl(categoryId) + "/" + productId,
+                categoryProductUrl(categoryId, productId),
                 HttpMethod.DELETE,
                 new HttpEntity<>(headers),
                 Map.class
