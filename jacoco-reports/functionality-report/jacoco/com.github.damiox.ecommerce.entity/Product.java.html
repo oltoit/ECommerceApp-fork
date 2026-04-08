@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Product.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ecommerceapp</a> &gt; <a href="index.source.html" class="el_package">com.github.damiox.ecommerce.entity</a> &gt; <span class="el_source">Product.java</span></div><h1>Product.java</h1><pre class="source lang-java linenums">package com.github.damiox.ecommerce.entity;
+
+import java.util.Set;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+
+/**
+ * A Product is an entity that represents an article for sale.
+ * Products are associated with categories either directly or indirectly.
+ * For instance, for a given child category B, if it's associated to a
+ * parent category A, then the Product is associated with
+ * category B (directly) and A (indirectly).
+ *
+ * @author dnardelli
+ */
+@Entity
+@Table(name = &quot;app_product&quot;)
+<span class="fc" id="L23">public class Product extends AbstractEntity {</span>
+
+    public static final String CURRENCY = &quot;EUR&quot;;
+
+    @Column(name = &quot;name&quot;, nullable = false)
+    private String name;
+
+    @ManyToMany
+    @JoinTable(name = &quot;app_product_category&quot;, joinColumns = @JoinColumn(name = &quot;productid&quot;), inverseJoinColumns = @JoinColumn(name = &quot;categoryid&quot;))
+    private Set&lt;Category&gt; categories;
+
+    @Column(name = &quot;price&quot;, nullable = false)
+    private double price;
+
+    @ManyToOne
+    @JoinColumn(name = &quot;userid&quot;, nullable = false, updatable = false)
+    private User user;
+
+    public String getName() {
+<span class="fc" id="L42">        return name;</span>
+    }
+
+    public void setName(String name) {
+<span class="fc" id="L46">        this.name = name;</span>
+<span class="fc" id="L47">    }</span>
+
+    public Set&lt;Category&gt; getCategories() {
+<span class="fc" id="L50">        return categories;</span>
+    }
+
+    public void setCategories(Set&lt;Category&gt; categories) {
+<span class="nc" id="L54">        this.categories = categories;</span>
+<span class="nc" id="L55">    }</span>
+
+    public double getPrice() {
+<span class="fc" id="L58">        return price;</span>
+    }
+
+    public void setPrice(double price) {
+<span class="fc" id="L62">        this.price = price;</span>
+<span class="fc" id="L63">    }</span>
+
+    public User getUser() {
+<span class="fc" id="L66">        return user;</span>
+    }
+
+    public void setUser(User user) {
+<span class="fc" id="L70">        this.user = user;</span>
+<span class="fc" id="L71">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

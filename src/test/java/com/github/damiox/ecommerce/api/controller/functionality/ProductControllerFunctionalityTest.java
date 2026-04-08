@@ -130,6 +130,23 @@ public class ProductControllerFunctionalityTest extends IntegrationTestBase {
     }
 
     @Test
+    public void updateProductDifferentCurrency() throws SQLException {
+        // create first product
+        long id = productUtils.createProduct(defaultProduct, user1.id);
+
+        // update second product on first products path
+        HttpHeaders headers = loginWithHeaders(user1);
+        String productUrl = productUrl((int) id);
+        ProductDto productDifferentCurrency = new ProductDto("different-currency", "USD", 10000.0);
+        ResponseEntity<Map> productEntity = updateProduct(headers, productDifferentCurrency, productUrl);
+        assertThat(productEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        // get product
+        ProductDto productFromDb = productUtils.getProduct(id);
+        assertThat(defaultProduct).isNotEqualTo(productFromDb);
+    }
+
+    @Test
     public void updateProductNotFound() throws SQLException{
         // create second product on first products path
         long id = 1;

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProductResource.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ecommerceapp</a> &gt; <a href="index.source.html" class="el_package">com.github.damiox.ecommerce.api.resource</a> &gt; <span class="el_source">ProductResource.java</span></div><h1>ProductResource.java</h1><pre class="source lang-java linenums">package com.github.damiox.ecommerce.api.resource;
+
+import org.springframework.hateoas.ResourceSupport;
+
+import java.util.List;
+
+/**
+ * Spring HATEOAS-oriented DTO for {@see Product} entity
+ *
+ * @author dnardelli
+ */
+public class ProductResource extends ResourceSupport {
+
+    private final String name;
+    private final String currency;
+    private final double price;
+    private final List&lt;CategoryResource&gt; categories;
+    private final String owner;
+
+<span class="fc" id="L20">    public ProductResource(String name, String currency, double price, List&lt;CategoryResource&gt; categories, String owner) {</span>
+<span class="fc" id="L21">        this.name = name;</span>
+<span class="fc" id="L22">        this.currency = currency;</span>
+<span class="fc" id="L23">        this.price = price;</span>
+<span class="fc" id="L24">        this.categories = categories;</span>
+<span class="fc" id="L25">        this.owner = owner;</span>
+<span class="fc" id="L26">    }</span>
+
+    public String getName() {
+<span class="fc" id="L29">        return name;</span>
+    }
+
+    public String getCurrency() {
+<span class="fc" id="L33">        return currency;</span>
+    }
+
+    public Double getPrice() {
+<span class="fc" id="L37">        return price;</span>
+    }
+
+    public List&lt;CategoryResource&gt; getCategories() {
+<span class="fc" id="L41">        return categories;</span>
+    }
+
+    public String getOwner() {
+<span class="fc" id="L45">        return owner;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

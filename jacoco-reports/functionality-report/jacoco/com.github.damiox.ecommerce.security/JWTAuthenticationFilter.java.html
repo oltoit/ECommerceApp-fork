@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JWTAuthenticationFilter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ecommerceapp</a> &gt; <a href="index.source.html" class="el_package">com.github.damiox.ecommerce.security</a> &gt; <span class="el_source">JWTAuthenticationFilter.java</span></div><h1>JWTAuthenticationFilter.java</h1><pre class="source lang-java linenums">package com.github.damiox.ecommerce.security;
+
+import com.github.damiox.ecommerce.service.SecurityService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+/**
+ * JWT Authentication Filter
+ * If an 'Authorization' header is found in the HTTP Request then the token is being retrieved.
+ * That token will be validated and, if successful, then user will be authenticated.
+ *
+ * @author dnardelli
+ */
+@Component
+<span class="fc" id="L25">public class JWTAuthenticationFilter extends OncePerRequestFilter {</span>
+
+<span class="fc" id="L27">    private static final Logger logger = LoggerFactory.getLogger(JWTAuthenticationFilter.class);</span>
+    private static final String HEADER_STRING = &quot;Authorization&quot;;
+
+    @Autowired
+    private SecurityService securityService;
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest httpRequest, HttpServletResponse httpResponse, FilterChain filterChain)
+        throws ServletException, IOException {
+
+<span class="fc" id="L37">        final String token = httpRequest.getHeader(HEADER_STRING);</span>
+
+<span class="pc bpc" id="L39" title="1 of 4 branches missed.">        if (token != null &amp;&amp; SecurityContextHolder.getContext().getAuthentication() == null) {</span>
+            try {
+<span class="fc" id="L41">                securityService.authenticate(token);</span>
+<span class="nc" id="L42">            } catch (Exception e) {</span>
+<span class="nc" id="L43">                logger.debug(&quot;Failed when authenticating token '{}'. Error: '{}'&quot;, token, e.getMessage());</span>
+<span class="fc" id="L44">            }</span>
+        }
+
+<span class="fc" id="L47">        filterChain.doFilter(httpRequest, httpResponse);</span>
+
+<span class="fc" id="L49">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

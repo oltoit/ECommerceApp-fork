@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CategoryProductsController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ecommerceapp</a> &gt; <a href="index.source.html" class="el_package">com.github.damiox.ecommerce.api.controller</a> &gt; <span class="el_source">CategoryProductsController.java</span></div><h1>CategoryProductsController.java</h1><pre class="source lang-java linenums">package com.github.damiox.ecommerce.api.controller;
+
+import com.github.damiox.ecommerce.api.assembler.ProductResourceAssembler;
+import com.github.damiox.ecommerce.entity.Category;
+import com.github.damiox.ecommerce.entity.Product;
+import com.github.damiox.ecommerce.exception.NotFoundException;
+import com.github.damiox.ecommerce.service.CategoryService;
+import com.github.damiox.ecommerce.service.ProductService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * API Endpoint for categories and products association
+ *
+ * @author dnardelli
+ */
+@RestController
+@RequestMapping(path = &quot;/categories/{categoryid}/products&quot;)
+<span class="fc" id="L27">public class CategoryProductsController {</span>
+
+    @Autowired
+    private CategoryService categoryService;
+    @Autowired
+    private ProductService productService;
+    @Autowired
+    private ProductResourceAssembler productResourceAssembler;
+    @Autowired
+    private PagedResourcesAssembler&lt;Product&gt; pagedResourcesAssembler;
+
+    @RequestMapping(method = RequestMethod.GET)
+    public ResponseEntity&lt;?&gt; retrieveAllProducts(@PathVariable Long categoryid, Pageable pageable) {
+        // Getting the requiring category; or throwing exception if not found
+<span class="fc" id="L41">        final Category category = categoryService.getCategoryById(categoryid)</span>
+<span class="fc" id="L42">            .orElseThrow(() -&gt; new NotFoundException(&quot;category&quot;));</span>
+
+        // Getting all products in application...
+<span class="fc" id="L45">        final Page&lt;Product&gt; products = productService.getAllProducts(category, pageable);</span>
+
+<span class="fc" id="L47">        return ResponseEntity.ok(pagedResourcesAssembler.toResource(products, productResourceAssembler));</span>
+    }
+
+    @RequestMapping(path = &quot;/{productid}&quot;, method = RequestMethod.POST)
+    public ResponseEntity&lt;?&gt; addProduct(@PathVariable Long categoryid, @PathVariable Long productid) {
+        // Getting the requiring category; or throwing exception if not found
+<span class="fc" id="L53">        final Category category = categoryService.getCategoryById(categoryid)</span>
+<span class="fc" id="L54">            .orElseThrow(() -&gt; new NotFoundException(&quot;category&quot;));</span>
+
+        // Getting the requiring product; or throwing exception if not found
+<span class="fc" id="L57">        final Product product = productService.getProductById(productid)</span>
+<span class="fc" id="L58">            .orElseThrow(() -&gt; new NotFoundException(&quot;product&quot;));</span>
+
+        // Validating if association does not exist...
+<span class="fc bfc" id="L61" title="All 2 branches covered.">        if (productService.hasCategory(product, category)) {</span>
+<span class="fc" id="L62">            throw new IllegalArgumentException(&quot;product &quot; + product.getId() + &quot; already contains category &quot; + category.getId());</span>
+        }
+
+        // Associating product with category...
+<span class="fc" id="L66">        productService.addCategory(product, category);</span>
+
+<span class="fc" id="L68">        return ResponseEntity.status(HttpStatus.CREATED).body(productResourceAssembler.toResource(product));</span>
+    }
+
+    @RequestMapping(path = &quot;/{productid}&quot;, method = RequestMethod.DELETE)
+    public ResponseEntity&lt;?&gt; removeProduct(@PathVariable Long categoryid, @PathVariable Long productid) {
+        // Getting the requiring category; or throwing exception if not found
+<span class="fc" id="L74">        final Category category = categoryService.getCategoryById(categoryid)</span>
+<span class="fc" id="L75">            .orElseThrow(() -&gt; new NotFoundException(&quot;category&quot;));</span>
+
+        // Getting the requiring product; or throwing exception if not found
+<span class="fc" id="L78">        final Product product = productService.getProductById(productid)</span>
+<span class="fc" id="L79">            .orElseThrow(() -&gt; new NotFoundException(&quot;product&quot;));</span>
+
+        // Validating if association does not exist...
+<span class="fc bfc" id="L82" title="All 2 branches covered.">        if (!productService.hasCategory(product, category)) {</span>
+<span class="fc" id="L83">            throw new IllegalArgumentException(&quot;product &quot; + product.getId() + &quot; does not contain category &quot; + category.getId());</span>
+        }
+
+        // Dis-associating product with category...
+<span class="fc" id="L87">        productService.removeCategory(product, category);</span>
+
+<span class="fc" id="L89">        return ResponseEntity.noContent().build();</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

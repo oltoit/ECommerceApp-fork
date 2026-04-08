@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SecurityServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ecommerceapp</a> &gt; <a href="index.source.html" class="el_package">com.github.damiox.ecommerce.service</a> &gt; <span class="el_source">SecurityServiceImpl.java</span></div><h1>SecurityServiceImpl.java</h1><pre class="source lang-java linenums">package com.github.damiox.ecommerce.service;
+
+import com.github.damiox.ecommerce.dao.UserRepository;
+import com.github.damiox.ecommerce.entity.User;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
+import java.util.Date;
+import javax.transaction.Transactional;
+
+/**
+ * Spring-oriented Implementation for {@link SecurityService}
+ * Also it implements {@link UserDetailsService} being required by the Spring Security framework.
+ *
+ * @author dnardelli
+ */
+@Service
+<span class="fc" id="L28">public class SecurityServiceImpl implements SecurityService, UserDetailsService {</span>
+
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
+    @Transactional
+    @Override
+    public String authenticate(final String username, final String password) {
+<span class="fc" id="L38">        final Authentication authentication =</span>
+<span class="fc" id="L39">            authenticationManager.authenticate(</span>
+                new UsernamePasswordAuthenticationToken(username, password)
+            );
+
+<span class="fc" id="L43">        SecurityContextHolder.getContext().setAuthentication(authentication);</span>
+
+<span class="fc" id="L45">        final User user = this.loadUserByUsername(username);</span>
+
+<span class="fc" id="L47">        return JwtUtils.generateToken(user.getId(), user.getUsername(), user.getRole());</span>
+    }
+
+    @Transactional
+    @Override
+    public void authenticate(final String token) {
+<span class="fc" id="L53">        final Claims claims = JwtUtils.parseToken(token);</span>
+
+<span class="fc" id="L55">        User user = new User();</span>
+<span class="fc" id="L56">        user.setId(Long.parseLong(claims.getSubject()));</span>
+<span class="fc" id="L57">        user.setPassword(&quot;&quot;);</span>
+<span class="fc" id="L58">        user.setUsername(claims.get(JwtUtils.TOKEN_CLAIM_USERNAME).toString());</span>
+<span class="fc" id="L59">        user.setRole(claims.get(JwtUtils.TOKEN_CLAIM_ROLES).toString());</span>
+
+        // Setting up Authentication...
+<span class="fc" id="L62">        SecurityContextHolder.getContext().setAuthentication(</span>
+<span class="fc" id="L63">            new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities())</span>
+        );
+<span class="fc" id="L65">    }</span>
+
+    @PreAuthorize(&quot;hasRole('ROLE_USER')&quot;)
+    @Transactional
+    @Override
+    public User getCurrentUser() {
+<span class="fc" id="L71">        return (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();</span>
+    }
+
+    @Transactional
+    @Override
+    public User loadUserByUsername(String username) throws UsernameNotFoundException {
+<span class="fc" id="L77">        return userRepository.findByUsername(username)</span>
+<span class="fc" id="L78">            .orElseThrow(() -&gt; new UsernameNotFoundException(&quot;Invalid username or password.&quot;));</span>
+    }
+
+    private static class JwtUtils {
+        private static final String TOKEN_SECRET_KEY = &quot;ECommerceAppSecretKey&quot;;
+        private static final String TOKEN_PREFIX = &quot;Bearer&quot;;
+        private static final String TOKEN_CLAIM_USERNAME = &quot;username&quot;;
+        private static final String TOKEN_CLAIM_ROLES = &quot;roles&quot;;
+        private static final long TOKEN_EXPIRATION = 3_600_000; // 1 hour
+
+        private static String generateToken(final Long userId, final String username, final String userRole) {
+<span class="fc" id="L89">            final Date now = new Date();</span>
+<span class="fc" id="L90">            final Date exp = new Date(now.getTime() + TOKEN_EXPIRATION);</span>
+
+            String jwtToken =
+<span class="fc" id="L93">                Jwts.builder()</span>
+<span class="fc" id="L94">                    .setSubject(userId.toString())</span>
+<span class="fc" id="L95">                    .claim(TOKEN_CLAIM_USERNAME, username)</span>
+<span class="fc" id="L96">                    .claim(TOKEN_CLAIM_ROLES, userRole)</span>
+<span class="fc" id="L97">                    .setIssuedAt(now)</span>
+<span class="fc" id="L98">                    .setNotBefore(now)</span>
+<span class="fc" id="L99">                    .setExpiration(exp)</span>
+<span class="fc" id="L100">                    .signWith(SignatureAlgorithm.HS256, TOKEN_SECRET_KEY)</span>
+<span class="fc" id="L101">                    .compact();</span>
+
+<span class="fc" id="L103">            return TOKEN_PREFIX + &quot; &quot; + jwtToken;</span>
+        }
+
+        private static Claims parseToken(String token) {
+<span class="fc" id="L107">            return Jwts.parser()</span>
+<span class="fc" id="L108">                .setSigningKey(TOKEN_SECRET_KEY)</span>
+<span class="fc" id="L109">                .parseClaimsJws(token.replace(TOKEN_PREFIX, &quot;&quot;))</span>
+<span class="fc" id="L110">                .getBody();</span>
+        }
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

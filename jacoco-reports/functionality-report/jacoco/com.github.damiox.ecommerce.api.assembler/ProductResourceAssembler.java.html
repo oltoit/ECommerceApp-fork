@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProductResourceAssembler.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ecommerceapp</a> &gt; <a href="index.source.html" class="el_package">com.github.damiox.ecommerce.api.assembler</a> &gt; <span class="el_source">ProductResourceAssembler.java</span></div><h1>ProductResourceAssembler.java</h1><pre class="source lang-java linenums">package com.github.damiox.ecommerce.api.assembler;
+
+import com.github.damiox.ecommerce.api.controller.ProductController;
+import com.github.damiox.ecommerce.api.resource.ProductResource;
+import com.github.damiox.ecommerce.entity.Product;
+import io.jsonwebtoken.lang.Collections;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.mvc.ResourceAssemblerSupport;
+import org.springframework.stereotype.Component;
+
+/**
+ * Transform {@link Product} into {@link ProductResource} DTO
+ *
+ * @author dnardelli
+ */
+@Component
+public class ProductResourceAssembler extends ResourceAssemblerSupport&lt;Product, ProductResource&gt; {
+
+    @Autowired
+    private CategoryResourceAssembler categoryResourceAssembler;
+
+    public ProductResourceAssembler() {
+<span class="fc" id="L23">        super(ProductController.class, ProductResource.class);</span>
+<span class="fc" id="L24">    }</span>
+
+    @Override
+    protected ProductResource instantiateResource(Product entity) {
+<span class="fc" id="L28">        return new ProductResource(</span>
+<span class="fc" id="L29">            entity.getName(),</span>
+            Product.CURRENCY,
+<span class="fc" id="L31">            entity.getPrice(),</span>
+<span class="fc bfc" id="L32" title="All 2 branches covered.">            !Collections.isEmpty(entity.getCategories()) ? categoryResourceAssembler.toResources(entity.getCategories()) : null,</span>
+<span class="fc" id="L33">            entity.getUser().getUsername()</span>
+        );
+    }
+
+    @Override
+    public ProductResource toResource(Product entity) {
+<span class="fc" id="L39">        return createResourceWithId(entity.getId(), entity);</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>
